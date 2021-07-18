@@ -1,0 +1,10 @@
+prefix: 金券のなる木
+use: false
+Item:
+  Material: STONE
+  Name: 5000円のもと
+  Lore:
+    - 換金すると5000円になります
+Area:
+  #world/x1/y1/z1/x2/y2/z2/per
+  #0<=per<100

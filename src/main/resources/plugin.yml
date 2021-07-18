@@ -1,0 +1,9 @@
+name: MoneyTree
+version: ${project.version}
+main: ubiquitaku.moneytree.MoneyTree
+api-version: 1.12
+commands:
+  mtree:
+permissions:
+  mtree.op:
+    default: op
