@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -93,9 +94,11 @@ public final class MoneyTree extends JavaPlugin {
                 if (use) {
                     //configLoadで作成したエリアのリストを順に取り出す
                     for (String s : list) {
+                        Bukkit.broadcastMessage(s);
                         String[] str = s.split("/");
                         //確率部分の計算
-                        if (Integer.parseInt(str[7]) > random.nextInt(100)) {
+                        if (Integer.parseInt(str[7]) <= random.nextInt(100)) {
+                            Bukkit.broadcastMessage("continue");
                             continue;
                         }
                         //範囲内のランダムな位置を設定(ブロック単位)
@@ -122,9 +125,16 @@ public final class MoneyTree extends JavaPlugin {
                         } else {
                             z = z1;
                         }
-                        Location location = new Location(Bukkit.getWorld(str[0]),x,y,z);
+                        Location location = new Location(Bukkit.getWorld(str[0]),x,y,z,1,1);
                         //itemをlocationに落とす
                         Bukkit.getWorld(str[0]).dropItem(location,item);
+                        Bukkit.broadcastMessage(x+" "+y+" "+z);
+                        Bukkit.broadcastMessage(item.getItemMeta().getDisplayName());
+                        //プレイヤーから取ったlocationにはちゃんと反応するくせに同じような書き方してる上のやつは動かない｡ﾟ(ﾟ´ω`ﾟ)ﾟ｡
+                        for (Player p:Bukkit.getOnlinePlayers()) {
+                            Bukkit.getWorld("world").dropItem(p.getLocation(),item);
+                            Bukkit.broadcastMessage(String.valueOf(p.getLocation().getDirection()));
+                        }
                     }
                 }
             }
