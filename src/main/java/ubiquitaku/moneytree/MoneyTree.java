@@ -95,11 +95,9 @@ public final class MoneyTree extends JavaPlugin {
                 if (use) {
                     //configLoadで作成したエリアのリストを順に取り出す
                     for (String s : list) {
-                        Bukkit.broadcastMessage(s);
                         String[] str = s.split("/");
                         //確率部分の計算
                         if (Integer.parseInt(str[7]) <= random.nextInt(100)) {
-                            Bukkit.broadcastMessage("continue");
                             continue;
                         }
                         //範囲内のランダムな位置を設定(ブロック単位)
@@ -128,13 +126,6 @@ public final class MoneyTree extends JavaPlugin {
                         }
                         Location location = new Location(Bukkit.getWorld(str[0]),x,y,z);
                         Bukkit.getWorld(str[0]).dropItem(location,item);
-                        Bukkit.broadcastMessage(x+" "+y+" "+z);
-                        if (Bukkit.getOnlinePlayers().size() != 0) {
-                            for (Player p:Bukkit.getOnlinePlayers()) {
-                                Bukkit.getWorld("world").dropItem(p.getLocation().add(x,y,z),item);
-                                break;
-                            }
-                        }
                     }
                 }
             }
