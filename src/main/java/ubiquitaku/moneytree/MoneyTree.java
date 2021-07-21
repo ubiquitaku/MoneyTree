@@ -47,6 +47,7 @@ public final class MoneyTree extends JavaPlugin {
                 return true;
             }
             if (args[0].equals("reload")) {
+                reloadConfig();
                 configLoad();
                 sender.sendMessage("リロード完了");
                 return true;
@@ -121,19 +122,18 @@ public final class MoneyTree extends JavaPlugin {
                         if (z1 > z2) {
                             z = z2+random.nextInt(z1 - z2);
                         } else if (z1 < z2) {
-                            z = y1+random.nextInt(z2 - z1);
+                            z = z1+random.nextInt(z2 - z1);
                         } else {
                             z = z1;
                         }
-                        Location location = new Location(Bukkit.getWorld(str[0]),x,y,z,1,1);
-                        //itemをlocationに落とす
+                        Location location = new Location(Bukkit.getWorld(str[0]),x,y,z);
                         Bukkit.getWorld(str[0]).dropItem(location,item);
                         Bukkit.broadcastMessage(x+" "+y+" "+z);
-                        Bukkit.broadcastMessage(item.getItemMeta().getDisplayName());
-                        //プレイヤーから取ったlocationにはちゃんと反応するくせに同じような書き方してる上のやつは動かない｡ﾟ(ﾟ´ω`ﾟ)ﾟ｡
-                        for (Player p:Bukkit.getOnlinePlayers()) {
-                            Bukkit.getWorld("world").dropItem(p.getLocation(),item);
-                            Bukkit.broadcastMessage(String.valueOf(p.getLocation().getDirection()));
+                        if (Bukkit.getOnlinePlayers().size() != 0) {
+                            for (Player p:Bukkit.getOnlinePlayers()) {
+                                Bukkit.getWorld("world").dropItem(p.getLocation().add(x,y,z),item);
+                                break;
+                            }
                         }
                     }
                 }
