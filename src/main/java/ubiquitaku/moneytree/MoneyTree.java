@@ -1,33 +1,39 @@
 package ubiquitaku.moneytree;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-
-import java.util.*;
 
 public final class MoneyTree extends JavaPlugin {
     //for spigot1.12.2
-    FileConfiguration config;
-    ItemMake im = new ItemMake();
-    Random random = new Random();
-    String prefix;
-    boolean use;
-    List<String> list;
-    ItemStack item;
+    private FileConfiguration config;
+    private static Random random = new Random();
+    private String prefix;
+    private List<String> list;
+    private ItemStack item;
+    private int taskId = -1;
+    private List<Area> areas;
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            for(Area area : areas)
+            	if (area.getChance()>random.nextDouble())
+            		area.getWorld().dropItem(area.randomLocation(), item);
+        }
+    };
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         saveDefaultConfig();
-        configLoad();
-        run();
+        loadConfig();
     }
 
     @Override
@@ -46,90 +52,61 @@ public final class MoneyTree extends JavaPlugin {
                 //説明を省略
                 return true;
             }
-            if (args[0].equals("reload")) {
+            if (args[0].equalsIgnoreCase("reload")) {
                 reloadConfig();
-                configLoad();
-                sender.sendMessage("リロード完了");
-                return true;
-            }
-            if (args[0].equals("on")) {
-                if (use) {
-                    sender.sendMessage("既にonです");
-                    return true;
-                }
-                use = true;
-                config.set("use",true);
-                saveConfig();
-                sender.sendMessage("onにしました");
-                return true;
-            }
-            if (args[0].equals("off")) {
-                if (!use) {
-                    sender.sendMessage("既にoffです");
-                    return true;
-                }
-                use = false;
-                config.set("use",false);
-                saveConfig();
-                sender.sendMessage("offにしました");
-                return true;
+                loadConfig();
+                sender.sendMessage(prefix+"リロード完了");
+
+            } else  if (args[0].equalsIgnoreCase("on")) {
+            	if (enable())
+            		sender.sendMessage(prefix+"onにしました");
+            	else
+            		 sender.sendMessage(prefix+"既にonです");
+
+            } else if (args[0].equalsIgnoreCase("off")) {
+                if (disable())
+                	sender.sendMessage(prefix+"offにしました");
+                else
+                	sender.sendMessage(prefix+"既にoffです");
             }
         }
         return true;
     }
 
-    public void configLoad() {
+    public void loadConfig() {
+    	if (taskId != -1)
+    		Bukkit.getScheduler().cancelTask(taskId);
         config = getConfig();
         prefix = config.getString("prefix");
-        use = config.getBoolean("use");
         list = config.getStringList("Area");
+        areas = new ArrayList<>();
+        for(String tmp : list)
+        	areas.add(new Area(tmp));
+        if (config.getBoolean("use"))
+        	taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, runnable, 0, 1);
+        else
+        	taskId = -1;
         //アイテムの情報を作る
-        item = im.make(config.getString("Item.Material"),config.getString("Item.Name"),config.getStringList("Item.Lore"),1);
+        item = ItemMake.make(config.getString("Item.Material"),config.getString("Item.Name"),config.getStringList("Item.Lore"),1);
     }
 
-    public void run() {
-        BukkitRunnable runnable = new BukkitRunnable() {
-            @Override
-            public void run() {
-                //pluginを停止していない場合のみ動く
-                if (use) {
-                    //configLoadで作成したエリアのリストを順に取り出す
-                    for (String s : list) {
-                        String[] str = s.split("/");
-                        //確率部分の計算
-                        if (Integer.parseInt(str[7]) <= random.nextInt(100)) {
-                            continue;
-                        }
-                        //範囲内のランダムな位置を設定(ブロック単位)
-                        int x,y,z;
-                        int x1 = Integer.parseInt(str[1]),x2 = Integer.parseInt(str[4]),y1 = Integer.parseInt(str[2]),y2 = Integer.parseInt(str[5]),z1 = Integer.parseInt(str[3]),z2 = Integer.parseInt(str[6]);
-                        if (x1 > x2) {
-                            x = x2+random.nextInt(x1 - x2);
-                        } else if (x1 < x2) {
-                            x = x1+random.nextInt(x2 - x1);
-                        } else {
-                            x = x1;
-                        }
-                        if (y1 > y2) {
-                            y = y2+random.nextInt(y1 - y2);
-                        } else if (y1 < y2) {
-                            y = y1+random.nextInt(y2 - y1);
-                        } else {
-                            y = y1;
-                        }
-                        if (z1 > z2) {
-                            z = z2+random.nextInt(z1 - z2);
-                        } else if (z1 < z2) {
-                            z = z1+random.nextInt(z2 - z1);
-                        } else {
-                            z = z1;
-                        }
-                        Location location = new Location(Bukkit.getWorld(str[0]),x,y,z);
-                        Bukkit.getWorld(str[0]).dropItem(location,item);
-                    }
-                }
-            }
-        };
-        runnable.runTaskTimer(this,40,40);
+
+    public boolean disable() {
+    	if (taskId == -1) return false;
+    	Bukkit.getScheduler().cancelTask(taskId);
+        taskId = -1;
+        config.set("use",false);
+        saveConfig();
+        return true;
     }
+
+
+    public boolean enable() {
+    	if (taskId != -1) return false;
+    	taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, runnable, 0, 1);
+        config.set("use",true);
+        saveConfig();
+        return true;
+    }
+
 }
