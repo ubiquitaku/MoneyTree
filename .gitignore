@@ -1,5 +1,8 @@
 # User-specific stuff
 .idea/
+.classpath
+.project
+.settings/
 
 *.iml
 *.ipr
